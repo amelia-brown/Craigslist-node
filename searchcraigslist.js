@@ -1,4 +1,3 @@
-console.log('Testing craigslist')
 var request = require('request');
 var cheerio = require('cheerio');
 var _ = require("underscore");
@@ -9,7 +8,7 @@ var request = Promise.promisify(request)
 
 
 module.exports.getLinks = function(url){
-	return new Promise(function(resolve,reject){
+	return new Promise(function(resolve, reject){
 	//constructs search url based on city, apartment type
 		var listinglinks = []; //array to hold links to listings returned from search
 		var requestbodies = [];	//array to hold request bodies
@@ -31,7 +30,8 @@ module.exports.getLinks = function(url){
 				requestbodies.forEach(function(promise,index){
 					promise.then(function(req){
 						$ = cheerio.load(req.body);
-						var postbodytext = decodeURIComponent($('#postingbody').html());
+            var postbodytext = $('#postingbody').html();
+						//var postbodytext = decodeURIComponent($('#postingbody').html());
 						var posttitle = $('#titletextonly').html();
 						var postprice = $('.price').html()
 						var map = $('#map')

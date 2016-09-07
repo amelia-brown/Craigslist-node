@@ -1,5 +1,7 @@
 var CL = require('./searchcraigslist');
-var fs = require('fs')
+var fs = require('fs');
+var Promise = require('bluebird');
+
 //To get results from Craigslist, use either getLinks or getLinksCallback
 
 //first argument for both is the city
@@ -44,6 +46,7 @@ var neighbourhoodCodes = {
   'presidio': 16,
   'marina': 17,
   'cow hollow': 17,
+  'mission': 18,
   'mission district': 18,
   'nob hill': 19,
   'lower nob hill': 20,
@@ -83,9 +86,12 @@ var composeQuery = function(neighbourhoods, maxprice) {
     var queryString = [];
     var url = 'http://sfbay.craigslist.org/search/sfc/roo';
     queryString.push('nh=' + neighbourhoodCode);
-    queryString.push('max_price=' + maxprice);
-    neighbourhoodUrls.push(url += '?' + queryString.join('&'));
+    if (maxprice) {
+      queryString.push('max_price=' + maxprice);
+    }
+    neighbourhoodUrls.push(url + '?' + queryString.join('&'));
   })
+  console.log(neighbourhoodUrls);
   return neighbourhoodUrls;
 };
 
@@ -96,44 +102,52 @@ var composeQuery = function(neighbourhoods, maxprice) {
 //   neighbourhoods: ['nob hill', 'mission', 'sunset'],
 //   listings: {
 //     nob hill: [
-//        >> nob hill listings <<
+//       {
+//         >> nob hill listings <<
+//       }
 //     ],
 //     mission: [
-//        >> mission listings <<
+//       {
+//         >> mission listings <<
+//       }
 //     ],
 //     sunset: [
-//        >> sunset listings <<
+//       {
+//         >> sunset listings <<
+//       }
 //     ]
 //   }
 // }
+//
 
 var craigslistData = function(neighbourhoods, maxprice) {
-  var results = {};
-  results.neighbourhoods = neighbourhoods;
-  neighbourhoodUrls = composeQuery(neighbourhoods, maxprice);
-  results.listings = {};
-  neighbourhoodUrls.map(function(url, index) {
-    var neighbourhood = neighbourhoods[index];
-    CL.getLinks(url)
+  return new Promise(function(resolve, reject) {
+    var results = {};
+    results.neighbourhoods = neighbourhoods;
+    neighbourhoodUrls = composeQuery(neighbourhoods, maxprice);
+    results.listings = {};
+    neighbourhoodUrls.map(function(url, index) {
+      var neighbourhood = neighbourhoods[index];
+      CL.getLinks(url)
       .then(function(data) {
         results.listings[neighbourhood] = data;
+        if (Object.keys(results.listings).length === neighbourhoodUrls.length) {
+          resolve(results);
+          fs.writeFile('results.json', JSON.stringify(results.listings), function(err) {
+            if (err) { console.log("error writing results: ", err); }
+          });
+          //   return results;
+          // console.log(index, results.listings);
+        }
       });
+    });
   });
-  fs.writeFile('results.json', JSON.stringify(results.listings), function(err) {
-    if (err) { console.log("error writing results: ", err); }
-  });
-  return results;
 };
 
-
-var x = craigslistData(['mission', 'pacific heights', 'tenderloin']);
-
-console.log(x);
-
-
+craigslistData(['tenderloin', 'mission', 'nob hill']).then(function(res) {
+  console.log(res);
+});
 
 //CL.getLinks('boston','roo').then(function(res){console.log(res)})
-
-
 //getLinksCallback example
 //CL.getLinksCallback('boston','roo',function(res){console.log(res)})
