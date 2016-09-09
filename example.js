@@ -15,7 +15,7 @@ var Promise = require('bluebird');
 
 //use whichever pattern makes more sense
 //
-var neighbourhoodCodes = {
+var neighborhoodCodes = {
   'soma': 1,
   'south beach': 1,
   'USF': 2,
@@ -78,28 +78,28 @@ var neighbourhoodCodes = {
 
 //getLinks example, see all room shares in Boston
 
-var composeQuery = function(neighbourhoods, maxprice) {
-  var neighbourhoodUrls = [];
-  neighbourhoods.map(function(neighbourhood, index) {
-    neighbourhood = neighbourhood.toLowerCase();
-    var neighbourhoodCode = neighbourhoodCodes[neighbourhood];
+var composeQuery = function(neighborhoods, maxprice) {
+  var neighborhoodUrls = [];
+  neighborhoods.map(function(neighborhood, index) {
+    neighborhood = neighborhood.toLowerCase();
+    var neighborhoodCode = neighborhoodCodes[neighborhood];
     var queryString = [];
     var url = 'http://sfbay.craigslist.org/search/sfc/roo';
-    queryString.push('nh=' + neighbourhoodCode);
+    queryString.push('nh=' + neighborhoodCode);
     if (maxprice) {
       queryString.push('max_price=' + maxprice);
     }
-    neighbourhoodUrls.push(url + '?' + queryString.join('&'));
+    neighborhoodUrls.push(url + '?' + queryString.join('&'));
   })
-  console.log(neighbourhoodUrls);
-  return neighbourhoodUrls;
+  console.log(neighborhoodUrls);
+  return neighborhoodUrls;
 };
 
 
 // function returns an object, like this:
 //
 // {
-//   neighbourhoods: ['nob hill', 'mission', 'sunset'],
+//   neighborhoods: ['nob hill', 'mission', 'sunset'],
 //   listings: {
 //     nob hill: [
 //       {
@@ -120,18 +120,18 @@ var composeQuery = function(neighbourhoods, maxprice) {
 // }
 //
 
-var craigslistData = function(neighbourhoods, maxprice) {
+var craigslistData = function(neighborhoods, maxprice) {
   return new Promise(function(resolve, reject) {
     var results = {};
-    results.neighbourhoods = neighbourhoods;
-    neighbourhoodUrls = composeQuery(neighbourhoods, maxprice);
+    results.neighborhoods = neighborhoods;
+    neighborhoodUrls = composeQuery(neighborhoods, maxprice);
     results.listings = {};
-    neighbourhoodUrls.map(function(url, index) {
-      var neighbourhood = neighbourhoods[index];
+    neighborhoodUrls.map(function(url, index) {
+      var neighborhood = neighborhoods[index];
       CL.getLinks(url)
       .then(function(data) {
-        results.listings[neighbourhood] = data;
-        if (Object.keys(results.listings).length === neighbourhoodUrls.length) {
+        results.listings[neighborhood] = data;
+        if (Object.keys(results.listings).length === neighborhoodUrls.length) {
           resolve(results);
           fs.writeFile('results.json', JSON.stringify(results.listings), function(err) {
             if (err) { console.log("error writing results: ", err); }
